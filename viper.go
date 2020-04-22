@@ -214,6 +214,7 @@ type Viper struct {
 	properties *properties.Properties
 
 	onConfigChange func(fsnotify.Event)
+	onRemoteConfigChange func()
 }
 
 // New returns an initialized Viper instance.
@@ -333,6 +334,11 @@ var SupportedRemoteProviders = []string{"etcd", "consul", "firestore"}
 func OnConfigChange(run func(in fsnotify.Event)) { v.OnConfigChange(run) }
 func (v *Viper) OnConfigChange(run func(in fsnotify.Event)) {
 	v.onConfigChange = run
+}
+
+func OnRemoteConfigChange(run func()) { v.OnRemoteConfigChange(run) }
+func (v *Viper) OnRemoteConfigChange(run func()) {
+	v.onRemoteConfigChange = run
 }
 
 func WatchConfig() { v.WatchConfig() }
@@ -1736,6 +1742,7 @@ func (v *Viper) WatchRemoteConfig() error {
 	return v.watchKeyValueConfig()
 }
 
+func WatchRemoteConfigOnChannel() error { return v.WatchRemoteConfigOnChannel() }
 func (v *Viper) WatchRemoteConfigOnChannel() error {
 	return v.watchKeyValueConfigOnChannel()
 }
@@ -1776,6 +1783,11 @@ func (v *Viper) watchKeyValueConfigOnChannel() error {
 				b := <-rc
 				reader := bytes.NewReader(b.Value)
 				v.unmarshalReader(reader, v.kvstore)
+
+				// notify app
+				if v.onRemoteConfigChange != nil {
+					v.onRemoteConfigChange()
+				}
 			}
 		}(respc)
 		return nil

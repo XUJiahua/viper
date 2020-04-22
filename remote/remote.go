@@ -30,6 +30,7 @@ func (rc remoteConfigProvider) Get(rp viper.RemoteProvider) (io.Reader, error) {
 	return bytes.NewReader(b), nil
 }
 
+// TODO: what's the difference with Get???
 func (rc remoteConfigProvider) Watch(rp viper.RemoteProvider) (io.Reader, error) {
 	cm, err := getConfigManager(rp)
 	if err != nil {
